@@ -36,6 +36,7 @@ import (
 	"k8s.io/klog/v2"
 
 	cdiv1 "kubevirt.io/containerized-data-importer/pkg/apis/core/v1beta1"
+	"kubevirt.io/containerized-data-importer/pkg/nbdkit"
 	"kubevirt.io/containerized-data-importer/pkg/util"
 )
 
@@ -65,11 +66,13 @@ type HTTPDataSource struct {
 	// url the url to report to the caller of getURL, could be the endpoint, or a file in scratch space.
 	url *url.URL
 	// true if we are using a custom CA (and thus have to use scratch storage)
-	customCA bool
+	customCA string
 	// true if we know `qemu-img` will fail to download this
 	brokenForQemuImg bool
 	// the content length reported by the http server.
 	contentLength uint64
+
+	n *nbdkit.Nbdkit
 }
 
 // NewHTTPDataSource creates a new instance of the http data provider.
@@ -94,7 +97,7 @@ func NewHTTPDataSource(endpoint, accessKey, secKey, certDir string, contentType 
 		httpReader:       httpReader,
 		contentType:      contentType,
 		endpoint:         ep,
-		customCA:         certDir != "",
+		customCA:         certDir,
 		brokenForQemuImg: brokenForQemuImg,
 		contentLength:    contentLength,
 	}
@@ -108,24 +111,29 @@ func NewHTTPDataSource(endpoint, accessKey, secKey, certDir string, contentType 
 func (hs *HTTPDataSource) Info() (ProcessingPhase, error) {
 	var err error
 	hs.readers, err = NewFormatReaders(hs.httpReader, hs.contentLength)
-	if hs.contentType == cdiv1.DataVolumeArchive {
-		return ProcessingPhaseTransferDataDir, nil
-	}
 	if err != nil {
 		klog.Errorf("Error creating readers: %v", err)
 		return ProcessingPhaseError, err
 	}
-	// The readers now contain all the information needed to determine if we can stream directly or if we need scratch space to download
-	// the file to, before converting.
-	if !hs.readers.Archived && !hs.customCA && !hs.brokenForQemuImg && hs.readers.Convert {
-		// We can pass straight to conversion from the endpoint. No scratch required.
-		hs.url = hs.endpoint
+	if hs.brokenForQemuImg {
+		return ProcessingPhaseTransferScratch, nil
+	}
+	hs.url = hs.endpoint
+	if !hs.readers.Archived && hs.customCA != "" && hs.readers.Convert {
+		// We can pass straight to conversion from the endpoint
 		return ProcessingPhaseConvert, nil
 	}
-	if !hs.readers.Convert {
-		return ProcessingPhaseTransferDataFile, nil
+	hs.n = nbdkit.NewNbdkitCurl("/var/run/nbdkit.pid", hs.customCA)
+	if hs.readers.ArchiveGz {
+		hs.n.AddFilter(nbdkit.NbdkitGzipFilter)
+		klog.V(2).Infof("Added nbdkit gzip filter")
 	}
-	return ProcessingPhaseTransferScratch, nil
+	if hs.readers.ArchiveXz {
+		hs.n.AddFilter(nbdkit.NbdkitXzFilter)
+		klog.V(2).Infof("Added nbdkit xz filter")
+	}
+
+	return ProcessingPhaseConvertNbd, nil
 }
 
 // Transfer is called to transfer the data from the source to a scratch location.
@@ -167,6 +175,10 @@ func (hs *HTTPDataSource) TransferFile(fileName string) (ProcessingPhase, error)
 // GetURL returns the URI that the data processor can use when converting the data.
 func (hs *HTTPDataSource) GetURL() *url.URL {
 	return hs.url
+}
+
+func (hs *HTTPDataSource) GetNbdkit() *nbdkit.Nbdkit {
+	return hs.n
 }
 
 // Close all readers.

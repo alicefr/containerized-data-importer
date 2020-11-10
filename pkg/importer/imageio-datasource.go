@@ -33,6 +33,7 @@ import (
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 
+	"kubevirt.io/containerized-data-importer/pkg/nbdkit"
 	"kubevirt.io/containerized-data-importer/pkg/util"
 )
 
@@ -569,4 +570,8 @@ func getOvirtClient(ep string, accessKey string, secKey string) (ConnectionInter
 	return &ConnectionWrapper{
 		conn: conn,
 	}, err
+}
+
+func (is *ImageioDataSource) GetNbdkit() *nbdkit.Nbdkit {
+	return &nbdkit.Nbdkit{}
 }

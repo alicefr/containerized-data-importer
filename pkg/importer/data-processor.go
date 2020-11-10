@@ -27,6 +27,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"kubevirt.io/containerized-data-importer/pkg/image"
+	"kubevirt.io/containerized-data-importer/pkg/nbdkit"
 	"kubevirt.io/containerized-data-importer/pkg/util"
 )
 
@@ -49,6 +50,9 @@ const (
 	// ProcessingPhaseConvert is the phase in which the data is taken from the url provided by the source, and it is converted to the target RAW disk image format.
 	// The url can be an http end point or file system end point.
 	ProcessingPhaseConvert ProcessingPhase = "Convert"
+	// ProcessingPhaseConvertNbd is the phase in which the data is taken from the url provided by the source, and it is converted to the target using ndb to directly stream the data into the RAW disk image format.
+	// The url can be an http end point or file system end point.
+	ProcessingPhaseConvertNbd ProcessingPhase = "ConvertNbd"
 	// ProcessingPhaseResize the disk image, this is only needed when the target contains a file system (block device do not need a resize)
 	ProcessingPhaseResize ProcessingPhase = "Resize"
 	// ProcessingPhaseComplete is the phase where the entire process completed successfully and we can exit gracefully.
@@ -86,6 +90,7 @@ type DataSourceInterface interface {
 	TransferFile(fileName string) (ProcessingPhase, error)
 	// Geturl returns the url that the data processor can use when converting the data.
 	GetURL() *url.URL
+	GetNbdkit() *nbdkit.Nbdkit
 	// Close closes any readers or other open resources.
 	Close() error
 }
@@ -203,6 +208,11 @@ func (dp *DataProcessor) ProcessDataWithPause() error {
 			if err != nil {
 				err = errors.Wrap(err, "Unable to convert source data to target format")
 			}
+		case ProcessingPhaseConvertNbd:
+			dp.currentPhase, err = dp.convertNbdkit(dp.source.GetURL(), dp.source.GetNbdkit())
+			if err != nil {
+				err = errors.Wrap(err, "Unable to convert source data to target format")
+			}
 		case ProcessingPhaseResize:
 			dp.currentPhase, err = dp.resize()
 			if err != nil {
@@ -227,6 +237,21 @@ func (dp *DataProcessor) validate(url *url.URL) error {
 		return ValidationSizeError{err: err}
 	}
 	return nil
+}
+
+func (dp *DataProcessor) convertNbdkit(url *url.URL, n *nbdkit.Nbdkit) (ProcessingPhase, error) {
+	err := dp.validate(url)
+	if err != nil {
+		return ProcessingPhaseError, err
+	}
+	klog.V(3).Infoln("Converting to Raw")
+	err = n.ConvertToRawStream(url, dp.dataFile)
+	if err != nil {
+		return ProcessingPhaseError, errors.Wrap(err, "Conversion to Raw failed")
+	}
+
+	return ProcessingPhaseResize, nil
+
 }
 
 // convert is called when convert the image from the url to a RAW disk image. Source formats include RAW/QCOW2 (Raw to raw conversion is a copy)

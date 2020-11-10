@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"kubevirt.io/containerized-data-importer/pkg/image"
+	"kubevirt.io/containerized-data-importer/pkg/nbdkit"
 )
 
 type fakeInfoOpRetVal struct {
@@ -95,6 +96,10 @@ func (m *MockDataProvider) Close() error {
 	return nil
 }
 
+func (m *MockDataProvider) GetNbdkit() *nbdkit.Nbdkit {
+	return &nbdkit.Nbdkit{}
+}
+
 type MockAsyncDataProvider struct {
 	MockDataProvider
 	ResumePhase ProcessingPhase
@@ -123,6 +128,10 @@ func (madp *MockAsyncDataProvider) Close() error {
 // GetURL returns the url that the data processor can use when converting the data.
 func (madp *MockAsyncDataProvider) GetURL() *url.URL {
 	return madp.MockDataProvider.GetURL()
+}
+
+func (madp *MockAsyncDataProvider) GetNbdkit() *nbdkit.Nbdkit {
+	return &nbdkit.Nbdkit{}
 }
 
 // GetResumePhase returns the next phase to process when resuming

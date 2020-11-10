@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"k8s.io/klog/v2"
-
+	"kubevirt.io/containerized-data-importer/pkg/nbdkit"
 	"kubevirt.io/containerized-data-importer/pkg/util"
 )
 
@@ -77,6 +77,9 @@ func (ud *UploadDataSource) TransferFile(fileName string) (ProcessingPhase, erro
 	// If we successfully wrote to the file, then the parse will succeed.
 	ud.url, _ = url.Parse(fileName)
 	return ProcessingPhaseResize, nil
+}
+func (ud *UploadDataSource) GetNbdkit() *nbdkit.Nbdkit {
+	return &nbdkit.Nbdkit{}
 }
 
 // GetURL returns the url that the data processor can use when converting the data.
@@ -161,4 +164,8 @@ func (aud *AsyncUploadDataSource) GetURL() *url.URL {
 // GetResumePhase returns the next phase to process when resuming
 func (aud *AsyncUploadDataSource) GetResumePhase() ProcessingPhase {
 	return aud.ResumePhase
+}
+
+func (aud *AsyncUploadDataSource) GetNbdkit() *nbdkit.Nbdkit {
+	return &nbdkit.Nbdkit{}
 }
