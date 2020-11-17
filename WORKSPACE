@@ -593,3 +593,12 @@ http_file(
         "https://storage.googleapis.com/builddeps/049778a480dd02774934b37c127b345d8748bfbec1e584f9c412a41af34eaf89",
     ],
 )
+
+http_file(
+    name = "libseccomp",
+    sha256 = "964e39835b59c76b7eb3f78c460bfc6e7acfb0c40b901775c7e8a7204537f8a7",
+    urls = [
+        "http://download.fedoraproject.org/pub/fedora/linux/releases/33/Everything/x86_64/os/Packages/l/libseccomp-2.5.0-3.fc33.x86_64.rpm",
+        "https://storage.googleapis.com/builddeps/964e39835b59c76b7eb3f78c460bfc6e7acfb0c40b901775c7e8a7204537f8a7",
+    ],
+)
