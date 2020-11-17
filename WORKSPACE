@@ -584,3 +584,12 @@ http_file(
         "https://storage.googleapis.com/builddeps/a63602bb9ebc13f31543332164c64e9c5342089e7431fa35b393f0692b6acb97",
     ],
 )
+
+http_file(
+    name = "liburing",
+    sha256 = "049778a480dd02774934b37c127b345d8748bfbec1e584f9c412a41af34eaf89",
+    urls = [
+        "http://download.fedoraproject.org/pub/fedora/linux/updates/33/Everything/x86_64/Packages/l/liburing-0.7-3.fc33.x86_64.rpm",
+        "https://storage.googleapis.com/builddeps/049778a480dd02774934b37c127b345d8748bfbec1e584f9c412a41af34eaf89",
+    ],
+)
