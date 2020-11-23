@@ -95,6 +95,10 @@ func (m *MockDataProvider) Close() error {
 	return nil
 }
 
+func (m *MockDataProvider) GetNbdkit() *image.Nbdkit {
+	return &image.Nbdkit{}
+}
+
 type MockAsyncDataProvider struct {
 	MockDataProvider
 	ResumePhase ProcessingPhase
@@ -123,6 +127,10 @@ func (madp *MockAsyncDataProvider) Close() error {
 // GetURL returns the url that the data processor can use when converting the data.
 func (madp *MockAsyncDataProvider) GetURL() *url.URL {
 	return madp.MockDataProvider.GetURL()
+}
+
+func (madp *MockAsyncDataProvider) GetNbdkit() *image.Nbdkit {
+	return &image.Nbdkit{}
 }
 
 // GetResumePhase returns the next phase to process when resuming

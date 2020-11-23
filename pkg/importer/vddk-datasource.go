@@ -36,6 +36,7 @@ import (
 	"golang.org/x/sys/unix"
 	"k8s.io/klog/v2"
 	"kubevirt.io/containerized-data-importer/pkg/common"
+	"kubevirt.io/containerized-data-importer/pkg/image"
 	"kubevirt.io/containerized-data-importer/pkg/util"
 )
 
@@ -473,4 +474,9 @@ func (vs *VDDKDataSource) TransferFile(fileName string) (ProcessingPhase, error)
 	}
 
 	return ProcessingPhaseComplete, nil
+}
+
+// GetNbdkit returns the nbdkit instance of the importer
+func (vs *VDDKDataSource) GetNbdkit() *image.Nbdkit {
+	return &image.Nbdkit{}
 }

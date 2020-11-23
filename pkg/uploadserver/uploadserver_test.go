@@ -37,6 +37,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"kubevirt.io/containerized-data-importer/pkg/common"
+	"kubevirt.io/containerized-data-importer/pkg/image"
 	"kubevirt.io/containerized-data-importer/pkg/importer"
 	"kubevirt.io/containerized-data-importer/pkg/util/cert"
 	"kubevirt.io/containerized-data-importer/pkg/util/cert/triple"
@@ -144,6 +145,10 @@ func (amd *AsyncMockDataSource) Close() error {
 // GetURL returns the url that the data processor can use when converting the data.
 func (amd *AsyncMockDataSource) GetURL() *url.URL {
 	return nil
+}
+
+func (amd *AsyncMockDataSource) GetNbdkit() *image.Nbdkit {
+	return &image.Nbdkit{}
 }
 
 // GetResumePhase returns the next phase to process when resuming
