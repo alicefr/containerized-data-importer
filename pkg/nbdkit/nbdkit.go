@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"k8s.io/klog/v2"
 	"kubevirt.io/containerized-data-importer/pkg/common"
 	"kubevirt.io/containerized-data-importer/pkg/image"
+	system "kubevirt.io/containerized-data-importer/pkg/system"
 	"kubevirt.io/containerized-data-importer/pkg/util"
 	"net/url"
-	"os"
-	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -20,7 +22,9 @@ const (
 )
 
 var (
-	progress = prometheus.NewCounterVec(
+	re                 = regexp.MustCompile(matcherString)
+	nbdkitExecFunction = system.ExecWithLimits
+	progress           = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "import_progress",
 			Help: "The import progress in percentage",
@@ -33,10 +37,12 @@ var (
 type NbdkitPlugin string
 type NbdkitFilter string
 
+// Nbdkit plugins
 const (
 	NbdkitCurlPlugin NbdkitPlugin = "curl"
 )
 
+// Nbdkit filters
 const (
 	NbdkitXzFilter   NbdkitFilter = "xz"
 	NbdkitTarFilter  NbdkitFilter = "tar"
@@ -53,14 +59,28 @@ func (f NbdkitFilter) String() string {
 func init() {
 	if err := prometheus.Register(progress); err != nil {
 		if are, ok := err.(prometheus.AlreadyRegisteredError); ok {
-			// A counter for that metric has been registered before.
-			// Use the old counter from now on.
 			progress = are.ExistingCollector.(*prometheus.CounterVec)
 		} else {
 			klog.Errorf("Unable to create prometheus progress counter")
 		}
 	}
 	ownerUID, _ = util.ParseEnvVar(common.OwnerUID, false)
+}
+
+// TODO: copyed from pkg/image/qemu.go. Find a way how to merge ndbkit and image package
+func reportProgress(line string) {
+	// (45.34/100%)
+	matches := re.FindStringSubmatch(line)
+	if len(matches) == 2 && ownerUID != "" {
+		klog.V(1).Info(matches[1])
+		// Don't need to check for an error, the regex made sure its a number we can parse.
+		v, _ := strconv.ParseFloat(matches[1], 64)
+		metric := &dto.Metric{}
+		err := progress.WithLabelValues(ownerUID).Write(metric)
+		if err == nil && v > 0 && v > *metric.Counter.Value {
+			progress.WithLabelValues(ownerUID).Add(v - *metric.Counter.Value)
+		}
+	}
 }
 
 type Nbdkit struct {
@@ -158,12 +178,5 @@ func (n *Nbdkit) startNbdkitWithQemuImg(qemuImgCmd string, qemuImgArgs []string)
 	argsNbdkit = append(argsNbdkit, n.plugin.String(), strings.Join(n.pluginArgs, " "), n.getSource())
 	// append qemu-img command
 	argsNbdkit = append(argsNbdkit, "--run", fmt.Sprintf("qemu-img %s $nbd %v", qemuImgCmd, strings.Join(qemuImgArgs, " ")))
-	nbdkit := exec.Command("nbdkit", argsNbdkit...)
-	nbdkit.Env = os.Environ()
-	out, err := nbdkit.CombinedOutput()
-	if err != nil {
-		klog.Errorf(string(out))
-	}
-
-	return out, err
+	return nbdkitExecFunction(nil, reportProgress, "nbdkit", argsNbdkit...)
 }
