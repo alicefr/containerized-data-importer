@@ -229,6 +229,21 @@ func (dp *DataProcessor) validate(url *url.URL) error {
 	return nil
 }
 
+func (dp *DataProcessor) convertNbdkit(url *url.URL, n *nbdkit.Nbdkit) (ProcessingPhase, error) {
+	err := dp.validate(url)
+	if err != nil {
+		return ProcessingPhaseError, err
+	}
+	klog.V(3).Infoln("Converting to Raw using nbdkit")
+	err = n.ConvertToRawStream(url, dp.dataFile)
+	if err != nil {
+		return ProcessingPhaseError, errors.Wrap(err, "Conversion to Raw failed")
+	}
+
+	return ProcessingPhaseResize, nil
+
+}
+
 // convert is called when convert the image from the url to a RAW disk image. Source formats include RAW/QCOW2 (Raw to raw conversion is a copy)
 func (dp *DataProcessor) convert(url *url.URL) (ProcessingPhase, error) {
 	err := dp.validate(url)
