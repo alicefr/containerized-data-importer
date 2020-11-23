@@ -49,6 +49,9 @@ const (
 	// ProcessingPhaseConvert is the phase in which the data is taken from the url provided by the source, and it is converted to the target RAW disk image format.
 	// The url can be an http end point or file system end point.
 	ProcessingPhaseConvert ProcessingPhase = "Convert"
+	// ProcessingPhaseConvertNbd is the phase in which the data is taken from the url provided by the source, and it is converted to the target using ndb to directly stream the data into the RAW disk image format.
+	// The url can be an http end point or file system end point.
+	ProcessingPhaseConvertNbd ProcessingPhase = "ConvertNbd"
 	// ProcessingPhaseResize the disk image, this is only needed when the target contains a file system (block device do not need a resize)
 	ProcessingPhaseResize ProcessingPhase = "Resize"
 	// ProcessingPhaseComplete is the phase where the entire process completed successfully and we can exit gracefully.
@@ -86,6 +89,7 @@ type DataSourceInterface interface {
 	TransferFile(fileName string) (ProcessingPhase, error)
 	// Geturl returns the url that the data processor can use when converting the data.
 	GetURL() *url.URL
+	GetNbdkit() *image.Nbdkit
 	// Close closes any readers or other open resources.
 	Close() error
 }
@@ -203,6 +207,11 @@ func (dp *DataProcessor) ProcessDataWithPause() error {
 			if err != nil {
 				err = errors.Wrap(err, "Unable to convert source data to target format")
 			}
+		case ProcessingPhaseConvertNbd:
+			dp.currentPhase, err = dp.convertNbdkit(dp.source.GetURL(), dp.source.GetNbdkit())
+			if err != nil {
+				err = errors.Wrap(err, "Unable to convert source data to target format")
+			}
 		case ProcessingPhaseResize:
 			dp.currentPhase, err = dp.resize()
 			if err != nil {
@@ -229,10 +238,11 @@ func (dp *DataProcessor) validate(url *url.URL) error {
 	return nil
 }
 
-func (dp *DataProcessor) convertNbdkit(url *url.URL, n *nbdkit.Nbdkit) (ProcessingPhase, error) {
-	err := dp.validate(url)
+func (dp *DataProcessor) convertNbdkit(url *url.URL, n *image.Nbdkit) (ProcessingPhase, error) {
+	klog.V(1).Infoln("Validating image using nbdkit")
+	err := n.Validate(url, dp.availableSpace, dp.filesystemOverhead)
 	if err != nil {
-		return ProcessingPhaseError, err
+		return ProcessingPhaseError, ValidationSizeError{err: err}
 	}
 	klog.V(3).Infoln("Converting to Raw using nbdkit")
 	err = n.ConvertToRawStream(url, dp.dataFile)

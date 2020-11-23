@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 
 	"k8s.io/klog/v2"
-
+	"kubevirt.io/containerized-data-importer/pkg/image"
 	"kubevirt.io/containerized-data-importer/pkg/util"
 )
 
@@ -121,6 +121,10 @@ func (sd *S3DataSource) Close() error {
 		err = sd.readers.Close()
 	}
 	return err
+}
+
+func (sd *S3DataSource) GetNbdkit() *image.Nbdkit {
+	return &image.Nbdkit{}
 }
 
 func createS3Reader(ep *url.URL, accessKey, secKey string) (io.ReadCloser, error) {

@@ -27,6 +27,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"kubevirt.io/containerized-data-importer/pkg/image"
 	"kubevirt.io/containerized-data-importer/pkg/util"
 )
 
@@ -150,4 +151,8 @@ func getImageFileName(dir string) (string, error) {
 	klog.V(1).Infof("VM disk image filename is %s", filename)
 
 	return filename, nil
+}
+
+func (rd *RegistryDataSource) GetNbdkit() *image.Nbdkit {
+	return &image.Nbdkit{}
 }
