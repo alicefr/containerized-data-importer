@@ -145,6 +145,17 @@ func (o *qemuOperations) Resize(image string, size resource.Quantity) error {
 	return nil
 }
 
+func checkOutputQemuImgInfo(output []byte, image string) (*ImgInfo, error) {
+	var info ImgInfo
+	err := json.Unmarshal(output, &info)
+	if err != nil {
+		klog.Errorf("Invalid JSON:\n%s\n", string(output))
+		return nil, errors.Wrapf(err, "Invalid json for image %s", image)
+	}
+	return &info, nil
+
+}
+
 func (o *qemuOperations) Info(url *url.URL) (*ImgInfo, error) {
 	var output []byte
 	var err error
@@ -159,13 +170,7 @@ func (o *qemuOperations) Info(url *url.URL) (*ImgInfo, error) {
 	if err != nil {
 		return nil, errors.Errorf("%s, %s", output, err.Error())
 	}
-	var info ImgInfo
-	err = json.Unmarshal(output, &info)
-	if err != nil {
-		klog.Errorf("Invalid JSON:\n%s\n", string(output))
-		return nil, errors.Wrapf(err, "Invalid json for image %s", url.String())
-	}
-	return &info, nil
+	return checkOutputQemuImgInfo(output, url.String())
 }
 
 func isSupportedFormat(value string) bool {
@@ -177,24 +182,27 @@ func isSupportedFormat(value string) bool {
 	}
 }
 
-func (o *qemuOperations) Validate(url *url.URL, availableSize int64, filesystemOverhead float64) error {
-	info, err := o.Info(url)
-	if err != nil {
-		return err
-	}
-
+func checkIfURLIsValid(info *ImgInfo, availableSize int64, filesystemOverhead float64, image string) error {
 	if !isSupportedFormat(info.Format) {
-		return errors.Errorf("Invalid format %s for image %s", info.Format, url.String())
+		return errors.Errorf("Invalid format %s for image %s", info.Format, image)
 	}
 
 	if len(info.BackingFile) > 0 {
-		return errors.Errorf("Image %s is invalid because it has backing file %s", url.String(), info.BackingFile)
+		return errors.Errorf("Image %s is invalid because it has backing file %s", image, info.BackingFile)
 	}
 
 	if int64(float64(availableSize)*(1-filesystemOverhead)) < info.VirtualSize {
 		return errors.Errorf("Virtual image size %d is larger than available size %d (PVC size %d, reserved overhead %f%%). A larger PVC is required.", info.VirtualSize, int64((1-filesystemOverhead)*float64(availableSize)), info.VirtualSize, filesystemOverhead)
 	}
 	return nil
+}
+
+func (o *qemuOperations) Validate(url *url.URL, availableSize int64, filesystemOverhead float64) error {
+	info, err := o.Info(url)
+	if err != nil {
+		return err
+	}
+	return checkIfURLIsValid(info, availableSize, filesystemOverhead, url.String())
 }
 
 // ConvertToRawStream converts an http accessible image to raw format without locally caching the image

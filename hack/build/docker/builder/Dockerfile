@@ -29,6 +29,9 @@ RUN sed -i 's/proxy = None//gI' /tmp/fedora_ci.dnf.repo && \
 	patch \
 	libnbd-devel \
 	nbdkit-devel \
+        nbdkit-curl-plugin \
+        nbdkit-xz-filter \
+        nbdkit-gzip-filter \
 	unzip \
 	java-1.8.0-openjdk \
 	btrfs-progs-devel \
