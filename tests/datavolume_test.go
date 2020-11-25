@@ -95,6 +95,13 @@ var _ = Describe("[vendor:cnv-qe@redhat.com][level:component]DataVolume tests", 
 		return InvalidQcowImagesURL() + "invalid-qcow-backing-file.img"
 	}
 
+	errorInvalidQcowLargeMemory := func() string {
+		return `Unable to process data: qemu-img: Could not open 'json: {"file.driver": "http", "file.url": "` + invalidQcowLargeMemoryURL() + `", "file.timeout": 3600}': L1 size too big`
+	}
+	errorInvalIdQcowBackingFile := func() string {
+		return `Unable to process data: qemu-img: Could not open 'json: {"file.driver": "http", "file.url": "` + invalidQcowBackingFileURL() + `", "file.timeout": 3600}': L1 size too big`
+	}
+
 	createRegistryImportDataVolume := func(dataVolumeName, size, url string) *cdiv1.DataVolume {
 		dataVolume := utils.NewDataVolumeWithRegistryImport(dataVolumeName, size, url)
 		cm, err := utils.CopyRegistryCertConfigMap(f.K8sClient, f.Namespace.Name, f.CdiInstallNs)
@@ -390,13 +397,13 @@ var _ = Describe("[vendor:cnv-qe@redhat.com][level:component]DataVolume tests", 
 					Reason:  "Error",
 				}}),
 			table.Entry("[rfe_id:1120][crit:high][posneg:negative][test_id:2253]fail creating import dv: invalid qcow large memory", dataVolumeTestArguments{
-				name:         "dv-invalid-qcow-large-memory",
-				size:         "1Gi",
-				url:          invalidQcowLargeMemoryURL,
-				dvFunc:       utils.NewDataVolumeWithHTTPImport,
-				errorMessage: "Unable to process data: qemu-img: Could not open '/data/disk.img': L1 size too big",
-				eventReason:  "Error",
-				phase:        cdiv1.ImportInProgress,
+				name:             "dv-invalid-qcow-large-memory",
+				size:             "1Gi",
+				url:              invalidQcowLargeMemoryURL,
+				dvFunc:           utils.NewDataVolumeWithHTTPImport,
+				errorMessageFunc: errorInvalidQcowLargeMemory,
+				eventReason:      "Error",
+				phase:            cdiv1.ImportInProgress,
 				readyCondition: &cdiv1.DataVolumeCondition{
 					Type:   cdiv1.DataVolumeReady,
 					Status: v1.ConditionFalse,
@@ -410,17 +417,17 @@ var _ = Describe("[vendor:cnv-qe@redhat.com][level:component]DataVolume tests", 
 				runningCondition: &cdiv1.DataVolumeCondition{
 					Type:    cdiv1.DataVolumeRunning,
 					Status:  v1.ConditionFalse,
-					Message: "Unable to process data: qemu-img: Could not open '/data/disk.img': L1 size too big",
+					Message: "L1 size too big",
 					Reason:  "Error",
 				}}),
 			table.Entry("[rfe_id:1120][crit:high][posneg:negative][test_id:2139]fail creating import dv: invalid qcow backing file", dataVolumeTestArguments{
-				name:         "dv-invalid-qcow-backing-file",
-				size:         "1Gi",
-				url:          invalidQcowBackingFileURL,
-				dvFunc:       utils.NewDataVolumeWithHTTPImport,
-				errorMessage: "Unable to process data: qemu-img: Could not open '/data/disk.img': L1 size too big",
-				eventReason:  "Error",
-				phase:        cdiv1.ImportInProgress,
+				name:             "dv-invalid-qcow-backing-file",
+				size:             "1Gi",
+				url:              invalidQcowBackingFileURL,
+				dvFunc:           utils.NewDataVolumeWithHTTPImport,
+				errorMessageFunc: errorInvalIdQcowBackingFile,
+				eventReason:      "Error",
+				phase:            cdiv1.ImportInProgress,
 				readyCondition: &cdiv1.DataVolumeCondition{
 					Type:   cdiv1.DataVolumeReady,
 					Status: v1.ConditionFalse,
@@ -434,7 +441,7 @@ var _ = Describe("[vendor:cnv-qe@redhat.com][level:component]DataVolume tests", 
 				runningCondition: &cdiv1.DataVolumeCondition{
 					Type:    cdiv1.DataVolumeRunning,
 					Status:  v1.ConditionFalse,
-					Message: "Unable to process data: qemu-img: Could not open '/data/disk.img': L1 size too big",
+					Message: "L1 size too big",
 					Reason:  "Error",
 				}}),
 			table.Entry("[test_id:3931]succeed creating import dv with streaming image conversion", dataVolumeTestArguments{
