@@ -1260,7 +1260,7 @@ var _ = Describe("[vendor:cnv-qe@redhat.com][level:component]DataVolume tests", 
 			}
 		})
 
-		It("Should create a new scratch PVC when PVC is deleted during import", func() {
+		PIt("Should create a new scratch PVC when PVC is deleted during import", func() {
 			// The test tries to catch issues in handling a deleted scratch PVC during import. There were at least
 			// two problems found and both required a very specific timing between scratch delete and controller actions.
 			// When quickly retrying to delete a scratch a few times the probability of catching the problem is increased.
