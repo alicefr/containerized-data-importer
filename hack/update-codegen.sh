@@ -17,7 +17,7 @@
 set -o errexit
 set -o nounset
 set -o pipefail
-
+set -x
 export GO111MODULE=off
 
 SCRIPT_ROOT="$(cd "$(dirname $0)/../" && pwd -P)"
