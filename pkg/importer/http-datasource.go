@@ -110,7 +110,17 @@ func NewHTTPDataSource(endpoint, accessKey, secKey, certDir string, contentType 
 // Info is called to get initial information about the data.
 func (hs *HTTPDataSource) Info() (ProcessingPhase, error) {
 	var err error
+	hs.n = image.NewNbdkitCurl("/var/run/nbdkit.pid", hs.customCA)
 	hs.readers, err = NewFormatReaders(hs.httpReader, hs.contentLength)
+	if hs.readers.ArchiveGz {
+		hs.n.AddFilter(image.NbdkitGzipFilter)
+		klog.V(2).Infof("Added nbdkit gzip filter")
+	}
+	if hs.readers.ArchiveXz {
+		hs.n.AddFilter(image.NbdkitXzFilter)
+		klog.V(2).Infof("Added nbdkit xz filter")
+	}
+	qemuOperations = image.NewNbdkitOperations(hs.GetNbdkit())
 	if hs.contentType == cdiv1.DataVolumeArchive {
 		return ProcessingPhaseTransferDataDir, nil
 	}
@@ -126,16 +136,6 @@ func (hs *HTTPDataSource) Info() (ProcessingPhase, error) {
 		// We can pass straight to conversion from the endpoint
 		return ProcessingPhaseConvert, nil
 	}
-	hs.n = image.NewNbdkitCurl("/var/run/nbdkit.pid", hs.customCA)
-	if hs.readers.ArchiveGz {
-		hs.n.AddFilter(image.NbdkitGzipFilter)
-		klog.V(2).Infof("Added nbdkit gzip filter")
-	}
-	if hs.readers.ArchiveXz {
-		hs.n.AddFilter(image.NbdkitXzFilter)
-		klog.V(2).Infof("Added nbdkit xz filter")
-	}
-	qemuOperations = image.NewNbdkitOperations(hs.GetNbdkit())
 	return ProcessingPhaseConvert, nil
 }
 
