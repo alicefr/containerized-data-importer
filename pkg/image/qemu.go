@@ -115,26 +115,7 @@ func convertToRaw(src, dest string, preallocate bool) error {
 }
 
 func (o *qemuOperations) ConvertToRawStream(url *url.URL, dest string, preallocate bool) error {
-	if len(url.Scheme) == 0 {
-		// File, instead of URL
-		return convertToRaw(url.String(), dest, preallocate)
-	}
-
-	jsonArg := fmt.Sprintf("json: {\"file.driver\": \"%s\", \"file.url\": \"%s\", \"file.timeout\": %d}", url.Scheme, url, networkTimeoutSecs)
-
-	args := []string{"convert", "-t", "none", "-p", "-O", "raw", jsonArg, dest}
-	if preallocate {
-		klog.V(1).Info("Added preallocation")
-		args = append(args, []string{"-o", "preallocation=falloc"}...)
-	}
-	_, err := qemuExecFunction(nil, reportProgress, "qemu-img", args...)
-	if err != nil {
-		// TODO: Determine what to do here, the conversion failed, and we need to clean up the mess, but we could be writing to a block device
-		os.Remove(dest)
-		return errors.Wrap(err, "could not stream/convert image to raw")
-	}
-
-	return nil
+	return convertToRaw(url.String(), dest, preallocate)
 }
 
 // convertQuantityToQemuSize translates a quantity string into a Qemu compatible string.
@@ -180,13 +161,7 @@ func (o *qemuOperations) Info(url *url.URL) (*ImgInfo, error) {
 	var output []byte
 	var err error
 
-	if len(url.Scheme) > 0 {
-		// Image is a URL, make sure the timeout is long enough.
-		jsonArg := fmt.Sprintf("json: {\"file.driver\": \"%s\", \"file.url\": \"%s\", \"file.timeout\": %d}", url.Scheme, url, networkTimeoutSecs)
-		output, err = qemuExecFunction(qemuInfoLimits, nil, "qemu-img", "info", "--output=json", jsonArg)
-	} else {
-		output, err = qemuExecFunction(qemuInfoLimits, nil, "qemu-img", "info", "--output=json", url.String())
-	}
+	output, err = qemuExecFunction(qemuInfoLimits, nil, "qemu-img", "info", "--output=json", url.String())
 	if err != nil {
 		return nil, errors.Errorf("%s, %s", output, err.Error())
 	}
