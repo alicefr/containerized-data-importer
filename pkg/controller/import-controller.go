@@ -833,7 +833,32 @@ func makeImporterPodSpec(namespace, image, verbose, pullPolicy string, podEnvVar
 			},
 		})
 	}
+	sparsification := true
+	var gsVolumeMount corev1.VolumeMount
+	var gsContainer corev1.Container
+	if sparsification {
+		// Container for sparsification tools
+		gsVolumeMount = corev1.VolumeMount{
+			Name:      common.LibguestfsVolumeName,
+			MountPath: common.LibguestfsServerDir,
+			ReadOnly:  false,
+		}
+		gsContainer = corev1.Container{
+			Name:            common.LibguestfsContainerName,
+			Image:           common.LibguestfsImage,
+			ImagePullPolicy: corev1.PullPolicy(pullPolicy),
+			Args:            []string{"--socket", common.LibguestfsServerSocket},
+			VolumeMounts:    []corev1.VolumeMount{gsVolumeMount},
+		}
 
+		// Add an ephemeral volume for the snapshot and the socket
+		volumes = append(volumes, corev1.Volume{
+			Name: common.LibguestfsVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		})
+	}
 	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Pod",
@@ -883,6 +908,11 @@ func makeImporterPodSpec(namespace, image, verbose, pullPolicy string, podEnvVar
 			Tolerations:   workloadNodePlacement.Tolerations,
 			Affinity:      workloadNodePlacement.Affinity,
 		},
+	}
+	if sparsification {
+		// Add libguestfs container to the importer pod
+		pod.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{gsVolumeMount}
+		pod.Spec.Containers = append(pod.Spec.Containers, gsContainer)
 	}
 
 	if podResourceRequirements != nil {

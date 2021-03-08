@@ -75,6 +75,8 @@ type HTTPDataSource struct {
 	contentLength uint64
 
 	n image.NbdkitOperation
+
+	snapshotImage string
 }
 
 var createNbdkitCurl = image.NewNbdkitCurl
@@ -145,7 +147,7 @@ func (hs *HTTPDataSource) Info() (ProcessingPhase, error) {
 	if err := hs.n.StartNbdkit(hs.endpoint.String()); err != nil {
 		return ProcessingPhaseError, err
 	}
-	return ProcessingPhaseConvert, nil
+	return ProcessingPhaseSparsification, nil
 }
 
 // Transfer is called to transfer the data from the source to a scratch location.

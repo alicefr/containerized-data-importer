@@ -195,6 +195,22 @@ const (
 
 	// UploadFormAsync is the path to POST CDI uploads as form data in async mode
 	UploadFormAsync = "/v1beta1/upload-form-async"
+
+	// LibguestfsContainerName is the name of the container for the libguestfs tools
+	LibguestfsContainerName = "libguestfs"
+
+	// LibguestfsImage is the image that contains the libguestfs tools
+	LibguestfsImage = "registry:5000/guestfs-server"
+
+	// LibguestfsServerDir
+	LibguestfsServerDir = "/var/libguestfs"
+
+	// LibguestfsServerSocket is the path to the socket for the sever to manage the libguestfs tools
+	LibguestfsServerSocket = LibguestfsServerDir + "/server.socket"
+
+	LibguestfsVolumeName = "libguestfs-volume"
+
+	GapMapSnapshotImage = LibguestfsServerDir + "/snapshot.qcow2"
 )
 
 // ProxyPaths are all supported paths

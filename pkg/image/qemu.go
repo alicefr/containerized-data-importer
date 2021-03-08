@@ -61,6 +61,7 @@ type QEMUOperations interface {
 	Info(url *url.URL) (*ImgInfo, error)
 	Validate(*url.URL, int64, float64) error
 	CreateBlankImage(string, resource.Quantity, bool) error
+	CreateSnapshotImage(source, dest, backFormat string) error
 }
 
 type qemuOperations struct{}
@@ -291,6 +292,19 @@ func PreallocateBlankBlock(dest string, size resource.Quantity) error {
 
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Could not preallocate blank block volume at %s with size %s", dest, size.String()))
+	}
+
+	return nil
+}
+
+// CreateSnapshotImage creates
+func (o *qemuOperations) CreateSnapshotImage(source, dest, backFormat string) error {
+	klog.V(3).Infof("Create image with backend %s in %s", source, dest)
+	args := []string{"create", "-f", "qcow2", "-b", "nbd:unix:" + source, "-F", backFormat, dest}
+	_, err := qemuExecFunction(nil, nil, "qemu-img", args...)
+	if err != nil {
+		os.Remove(dest)
+		return errors.Wrap(err, fmt.Sprintf("could not create snapshot image with source %s at %s", source, dest))
 	}
 
 	return nil

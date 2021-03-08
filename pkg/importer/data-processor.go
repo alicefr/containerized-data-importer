@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog/v2"
 
+	"kubevirt.io/containerized-data-importer/pkg/common"
 	"kubevirt.io/containerized-data-importer/pkg/image"
 	"kubevirt.io/containerized-data-importer/pkg/util"
 )
@@ -59,6 +60,8 @@ const (
 	ProcessingPhasePause ProcessingPhase = "Pause"
 	// ProcessingPhaseError is the phase in which we encountered an error and need to exit ungracefully.
 	ProcessingPhaseError ProcessingPhase = "Error"
+	//ProcessingPhaseSparsification is the phase where the source image is sparsify
+	ProcessingPhaseSparsification ProcessingPhase = "Sparsification"
 )
 
 // ValidationSizeError is an error indication size validation failure.
@@ -228,6 +231,11 @@ func (dp *DataProcessor) ProcessDataWithPause() error {
 			if err != nil {
 				err = errors.Wrap(err, "Unable to preallocate disk image to requested size")
 			}
+		case ProcessingPhaseSparsification:
+			dp.currentPhase, err = dp.sparsify(dp.source.GetURL())
+			if err != nil {
+				err = errors.Wrap(err, "Unable to sparsify the source")
+			}
 		default:
 			return errors.Errorf("Unknown processing phase %s", dp.currentPhase)
 		}
@@ -238,6 +246,33 @@ func (dp *DataProcessor) ProcessDataWithPause() error {
 		klog.V(1).Infof("New phase: %s\n", dp.currentPhase)
 	}
 	return err
+}
+
+func getFormat(url *url.URL) (string, error) {
+	i, err := qemuOperations.Info(url)
+	if err != nil {
+		return "", errors.Wrap(err, "Get source format")
+	}
+	return i.Format, nil
+}
+
+func (dp *DataProcessor) sparsify(url *url.URL) (ProcessingPhase, error) {
+	klog.V(1).Infoln("Sparsify the source")
+	format, err := getFormat(url)
+	if err != nil {
+		return ProcessingPhaseError, errors.Wrap(err, "Get source format")
+	}
+	// TODO afrosi avoid hardcoded source
+	qemuOperations.CreateSnapshotImage("/var/run/nbdkit.sock", common.GapMapSnapshotImage, format)
+	if err != nil {
+		return ProcessingPhaseError, errors.Wrap(err, "Create snapshot image")
+	}
+	// Sparsify image
+	err = image.Sparsify(common.GapMapSnapshotImage)
+	if err != nil {
+		return ProcessingPhaseError, errors.Wrap(err, "Sparsify the image")
+	}
+	return ProcessingPhaseConvert, nil
 }
 
 func (dp *DataProcessor) validate(url *url.URL) error {
