@@ -3,6 +3,7 @@ module kubevirt.io/containerized-data-importer
 go 1.14
 
 require (
+	github.com/alicefr/guestfs-server v0.0.0-20210311121758-e2c2abfed16d
 	github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30
 	github.com/aws/aws-sdk-go v1.15.77
 	github.com/containers/image/v5 v5.5.1
@@ -12,12 +13,12 @@ require (
 	github.com/emicklei/go-restful v2.10.0+incompatible
 	github.com/emicklei/go-restful-openapi v1.2.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-logr/logr v0.1.0
+	github.com/go-logr/logr v0.4.0
 	github.com/go-openapi/spec v0.19.3
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/snappy v0.0.2
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.1.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kubernetes-csi/external-snapshotter/v2 v2.1.1
 	github.com/mrnold/go-libnbd v1.4.1-cdi
@@ -37,6 +38,7 @@ require (
 	github.com/vmware/govmomi v0.23.1
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
 	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
+	google.golang.org/grpc v1.34.0-dev
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/square/go-jose.v2 v2.3.1
 	k8s.io/api v0.19.0-rc.2
@@ -46,7 +48,7 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.0.0
 	k8s.io/code-generator v0.18.6
-	k8s.io/klog/v2 v2.0.0
+	k8s.io/klog/v2 v2.6.0
 	k8s.io/kube-aggregator v0.18.6
 	k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
 	k8s.io/utils v0.0.0-20200720150651-0bdb4ca86cbc // indirect
@@ -56,6 +58,7 @@ require (
 )
 
 replace (
+	github.com/go-logr/logr => github.com/go-logr/logr v0.1.0
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200526144822-34f54f12813a
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c
 	github.com/openshift/library-go => github.com/mhenriks/library-go v0.0.0-20200804184258-4fc3a5379c7a
@@ -73,6 +76,7 @@ replace (
 	k8s.io/component-base => k8s.io/component-base v0.18.6
 	k8s.io/cri-api => k8s.io/cri-api v0.18.6
 	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.18.6
+	k8s.io/klog/v2 => k8s.io/klog/v2 v2.0.0
 	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.18.6
 	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.18.6
 	k8s.io/kube-proxy => k8s.io/kube-proxy v0.18.6

@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "filefmt.go",
+        "libguestfs.go",
         "nbdkit.go",
         "qemu.go",
         "validate.go",
@@ -14,11 +15,13 @@ go_library(
         "//pkg/common:go_default_library",
         "//pkg/system:go_default_library",
         "//pkg/util:go_default_library",
+        "//vendor/github.com/alicefr/guestfs-server/libguestfs:go_default_library",
         "//vendor/github.com/pkg/errors:go_default_library",
         "//vendor/github.com/prometheus/client_golang/prometheus:go_default_library",
         "//vendor/github.com/prometheus/client_model/go:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/api/resource:go_default_library",
         "//vendor/k8s.io/klog/v2:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
     ],
 )
 
