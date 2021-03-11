@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package alicefr.guestfs.libguestfs;
+option go_package = "github.com/alicefr/guestfs-server/libguestfs";
+
+service VirtSparsify {
+	rpc Sparsify(Image) returns (Response) {}
+}
+
+message Image {
+	string path = 1;
+}
+
+message Response {
+  bool success = 1;
+  string message = 2;
+}

@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "libguestfs.pb.go",
+        "libguestfs_grpc.pb.go",
+        "sparsification.go",
+    ],
+    importmap = "kubevirt.io/containerized-data-importer/vendor/github.com/alicefr/guestfs-server/libguestfs",
+    importpath = "github.com/alicefr/guestfs-server/libguestfs",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/google.golang.org/grpc/codes:go_default_library",
+        "//vendor/google.golang.org/grpc/status:go_default_library",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect:go_default_library",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl:go_default_library",
+        "//vendor/k8s.io/klog/v2:go_default_library",
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
+    ],
+)
