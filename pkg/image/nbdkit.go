@@ -213,12 +213,14 @@ func (n *Nbdkit) StartNbdkit(source string) error {
 	err = n.c.Start()
 	if err != nil {
 		klog.Errorf("Unable to start nbdkit: %v", err)
+		os.Remove(n.Socket)
 		return err
 	}
 
 	err = waitForNbd(n.NbdPidFile)
 	if err != nil {
 		klog.Errorf("Failed waiting for nbdkit to start up: %v", err)
+		os.Remove(n.Socket)
 		return err
 	}
 	return nil
@@ -259,6 +261,7 @@ func waitForNbd(pidfile string) error {
 
 // KillNbdkit stops the nbdkit process
 func (n *Nbdkit) KillNbdkit() error {
+	defer os.Remove(n.Socket)
 	if n.c == nil {
 		return nil
 	}

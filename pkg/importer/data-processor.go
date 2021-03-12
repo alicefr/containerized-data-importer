@@ -263,7 +263,7 @@ func (dp *DataProcessor) sparsify(url *url.URL) (ProcessingPhase, error) {
 		return ProcessingPhaseError, errors.Wrap(err, "Get source format")
 	}
 	// TODO afrosi avoid hardcoded source
-	qemuOperations.CreateSnapshotImage("/var/run/nbdkit.sock", common.GapMapSnapshotImage, format)
+	qemuOperations.CreateSnapshotImage("/var/libguestfs/nbdkit.sock", common.GapMapSnapshotImage, format)
 	if err != nil {
 		return ProcessingPhaseError, errors.Wrap(err, "Create snapshot image")
 	}

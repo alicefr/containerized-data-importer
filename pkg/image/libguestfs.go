@@ -12,6 +12,7 @@ import (
 
 func Sparsify(path string) error {
 	var opts []grpc.DialOption
+	var resp *libguestfs.Response
 	addr := "unix://" + common.LibguestfsServerSocket
 	opts = append(opts, grpc.WithInsecure())
 	i := &libguestfs.Image{
@@ -24,11 +25,11 @@ func Sparsify(path string) error {
 	}
 	defer conn.Close()
 	client := libguestfs.NewVirtSparsifyClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
 	defer cancel()
-	_, err = client.Sparsify(ctx, i)
+	resp, err = client.Sparsify(ctx, i)
 	if err != nil {
-		log.Errorf("Failed to sparsify image %s: %v", i.Path, err)
+		log.Errorf("Failed to sparsify image %s: error:%v response:%s ", i.GetPath(), err, resp.String())
 		return errors.Wrap(err, "Unable to sparsify the image")
 	}
 	return nil

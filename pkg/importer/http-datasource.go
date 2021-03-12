@@ -42,9 +42,12 @@ import (
 )
 
 const (
-	tempFile     = "tmpimage"
-	nbdkitPid    = "/var/run/nbdkit.pid"
-	nbdkitSocket = "/var/run/nbdkit.sock"
+	tempFile  = "tmpimage"
+	nbdkitPid = "/var/run/nbdkit.pid"
+)
+
+var (
+	nbdkitSocket = "/var/libguestfs/nbdkit.sock"
 )
 
 // HTTPDataSource is the data provider for http(s) endpoints.

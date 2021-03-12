@@ -909,11 +909,6 @@ func makeImporterPodSpec(namespace, image, verbose, pullPolicy string, podEnvVar
 			Affinity:      workloadNodePlacement.Affinity,
 		},
 	}
-	if sparsification {
-		// Add libguestfs container to the importer pod
-		pod.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{gsVolumeMount}
-		pod.Spec.Containers = append(pod.Spec.Containers, gsContainer)
-	}
 
 	if podResourceRequirements != nil {
 		pod.Spec.Containers[0].Resources = *podResourceRequirements
@@ -938,6 +933,11 @@ func makeImporterPodSpec(namespace, image, verbose, pullPolicy string, podEnvVar
 			Name:      ScratchVolName,
 			MountPath: common.ScratchDataDir,
 		})
+	}
+	if sparsification {
+		// Add libguestfs container to the importer pod
+		pod.Spec.Containers[0].VolumeMounts = append(pod.Spec.Containers[0].VolumeMounts, gsVolumeMount)
+		pod.Spec.Containers = append(pod.Spec.Containers, gsContainer)
 	}
 
 	if vddkImageName != nil {
