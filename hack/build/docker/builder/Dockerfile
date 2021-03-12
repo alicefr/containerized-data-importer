@@ -1,6 +1,8 @@
 FROM registry.fedoraproject.org/fedora-minimal:33
 MAINTAINER "The KubeVirt Project" <kubevirt-dev@googlegroups.com>
 
+ENV BAZEL_VERSION 3.4.1
+
 COPY fedora.repo /tmp/fedora_ci.dnf.repo
 
 RUN sed -i 's/proxy = None//gI' /tmp/fedora_ci.dnf.repo && \
@@ -9,7 +11,6 @@ RUN sed -i 's/proxy = None//gI' /tmp/fedora_ci.dnf.repo && \
 	mv /etc/yum.repos.d/*.repo /etc/yum.repos.d/old  && \
 	mv /tmp/fedora_ci.dnf.repo /etc/yum.repos.d/fedora.repo && \
 	microdnf update -y && microdnf install -y \
-	bazel \
 	cpio \
 	diffutils \
 	git \
@@ -66,6 +67,7 @@ RUN \
      mv kubebuilder_${KUBEBUILDER_VERSION}_linux_${ARCH} /usr/local/kubebuilder && \
      rm kubebuilder_${KUBEBUILDER_VERSION}_linux_${ARCH}.tar.gz )
 
+RUN curl -L -o /usr/bin/bazel https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-linux-x86_64 && chmod u+x /usr/bin/bazel
 
 ADD entrypoint.sh /entrypoint.sh
 ADD entrypoint-bazel.sh /entrypoint-bazel.sh
