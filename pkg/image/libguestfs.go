@@ -1,14 +1,17 @@
 package image
 
 import (
+	"context"
 	"github.com/alicefr/guestfs-server/libguestfs"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	log "k8s.io/klog/v2"
 	"kubevirt.io/containerized-data-importer/pkg/common"
+	"time"
 )
 
 func Sparsify(path string) error {
+	var opts []grpc.DialOption
 	addr := "unix://" + common.LibguestfsServerSocket
 	opts = append(opts, grpc.WithInsecure())
 	i := &libguestfs.Image{
